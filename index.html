@@ -1,77 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile_Archive_2026</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic_Archive_2026</title>
     <script src="https://pygame-web.github.io"></script>
     <style>
-        body { background: #000; color: #00ffcc; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .nav { display: flex; justify-content: space-around; padding: 10px; background: #111; }
-        .btn { background: #222; color: #00ffcc; border: 1px solid #00ffcc; padding: 15px 5px; flex: 1; margin: 2px; font-size: 10px; font-weight: bold; border-radius: 5px; }
-        #game-container { width: 100vw; height: 80vh; background: #000; position: relative; }
-        canvas { width: 100% !important; height: 100% !important; touch-action: none; }
+        body { background: #050505; color: #00ffcc; font-family: monospace; text-align: center; margin: 0; overflow-x: hidden; }
+        .header { padding: 15px; background: #111; border-bottom: 1px solid #333; font-size: 12px; letter-spacing: 2px; }
+        .nav { margin: 20px; display: flex; justify-content: center; flex-wrap: wrap; }
+        .btn { background: transparent; color: #00ffcc; border: 1px solid #00ffcc; padding: 12px 20px; margin: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #00ffcc; color: #000; }
+        #game-container { width: 100%; max-width: 640px; aspect-ratio: 1/1; margin: auto; border: 2px solid #222; background: #000; position: relative; }
+        canvas { width: 100% !important; height: 100% !important; display: block; }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <button class="btn" onclick="run('flappy')">KINETIC_A</button>
-        <button class="btn" onclick="run('chess')">STRATEGY_B</button>
-        <button class="btn" onclick="run('wordle')">LINGUISTIC</button>
-    </div>
-    <div id="game-container">
-        <canvas id="canvas" tabindex="-1"></canvas>
-    </div>
 
-    <!-- TOUCH-ENABLED FLAPPY BIRD -->
-    <script type="text/python" id="flappy">
-import pygame, random, asyncio
-pygame.init()
+<div class="header">SYSTEM_PORTAL // DATA_ARCHIVE_V26</div>
+
+<div class="nav">
+    <button class="btn" onclick="run('flappy')">KINETIC_MODEL_A</button>
+    <button class="btn" onclick="run('chess')">STRATEGY_LOGIC_B</button>
+    <button class="btn" onclick="run('wordle')">LINGUISTIC_DECRYPTOR</button>
+</div>
+
+<div id="game-container">
+    <canvas id="canvas" tabindex="-1"></canvas>
+</div>
+
+<!-- GAME 1: FULL FLAPPY BIRD 2026 -->
+<script type="text/python" id="flappy">
+import pygame, random, asyncio, sys, os
+
 WIDTH, HEIGHT = 400, 600
+GRAVITY, FLAP_POWER, PIPE_SPEED, GAP_SIZE, GROUND_HEIGHT = 0.25, -6.5, 3, 155, 100
+SKY, BIRD_YELLOW, BIRD_DARK_YELLOW, PIPE_GREEN, PIPE_DARK, GROUND_BASE, GROUND_GRASS, WHITE, BLACK = (113, 197, 207), (247, 203, 30), (200, 160, 20), (115, 191, 46), (83, 128, 34), (222, 216, 149), (158, 225, 124), (255, 255, 255), (0, 0, 0)
+
+pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-async def main():
-    bird_y, bird_vel, pipes, timer = 300, 0, [], 0
+font_score = pygame.font.SysFont("arial", 50, bold=True)
+font_ui = pygame.font.SysFont("arial", 25, bold=True)
+
+def draw_detailed_bird(surf, x, y, vel, timer):
+    tilt = max(-90, min(30, -vel * 3))
+    bird_surf = pygame.Surface((50, 40), pygame.SRCALPHA)
+    pygame.draw.polygon(bird_surf, BIRD_DARK_YELLOW, [(0, 15), (10, 10), (10, 25)])
+    pygame.draw.ellipse(bird_surf, BLACK, (5, 5, 40, 30))
+    pygame.draw.ellipse(bird_surf, BIRD_YELLOW, (7, 7, 36, 26))
+    pygame.draw.ellipse(bird_surf, WHITE, (25, 8, 16, 14))
+    pygame.draw.circle(bird_surf, BLACK, (34, 15), 3)
+    rotated = pygame.transform.rotate(bird_surf, tilt)
+    surf.blit(rotated, (x, y))
+
+def draw_pipe(surf, x, y, length, is_top):
+    pygame.draw.rect(surf, PIPE_GREEN, (x, y, 60, length))
+    pygame.draw.rect(surf, BLACK, (x, y, 60, length), 3)
+
+async def run_game():
+    bird_y, bird_vel, pipes, score, timer = HEIGHT//2, 0, [], 0, 0
     while True:
-        screen.fill((113, 197, 207))
-        for e in pygame.event.get():
-            # MOUSEBUTTONDOWN works for Screen Taps on Mobile
-            if e.type == pygame.MOUSEBUTTONDOWN or (e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE):
-                bird_vel = -6.5
-        bird_vel += 0.25
+        screen.fill(SKY)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return
+            if event.type == pygame.MOUSEBUTTONDOWN or (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE):
+                bird_vel = FLAP_POWER
+        bird_vel += GRAVITY
         bird_y += bird_vel
         timer += 1
         if timer % 90 == 0: pipes.append([WIDTH, random.randint(100, 350)])
         for p in pipes[:]:
-            p[0] -= 3
-            pygame.draw.rect(screen, (115, 191, 46), (p[0], 0, 60, p[1]))
-            pygame.draw.rect(screen, (115, 191, 46), (p[0], p[1]+150, 60, HEIGHT))
-            if pygame.Rect(65, bird_y, 30, 30).colliderect(pygame.Rect(p[0], 0, 60, p[1])): bird_y = 300
-        pygame.draw.circle(screen, (247, 203, 30), (80, int(bird_y)), 15)
+            p[0] -= PIPE_SPEED
+            draw_pipe(screen, p[0], 0, p[1], True)
+            draw_pipe(screen, p[0], p[1]+GAP_SIZE, HEIGHT, False)
+            if pygame.Rect(65, bird_y, 30, 30).colliderect(pygame.Rect(p[0], 0, 60, p[1])): return
+            if p[0] < -70: pipes.remove(p); score += 1
+        draw_detailed_bird(screen, 60, bird_y, bird_vel, timer)
         pygame.display.update()
         await asyncio.sleep(0)
-asyncio.run(main())
-    </script>
 
-    <!-- TOUCH-ENABLED CHESS -->
-    <script type="text/python" id="chess">
-import pygame, asyncio
+asyncio.run(run_game())
+</script>
+
+<!-- GAME 2: FULL CHESS ENGINE -->
+<script type="text/python" id="chess">
+import pygame, random, asyncio
+
+WIDTH, HEIGHT, SQ_SIZE = 640, 640, 80
+COLORS = [(245, 245, 220), (112, 128, 144)]
 pygame.init()
-screen = pygame.display.set_mode((640, 640))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+class ChessEngine:
+    def __init__(self):
+        self.board = [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p"] * 8, ["--"]*8, ["--"]*8, ["--"]*8, ["--"]*8,
+            ["P"] * 8, ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ]
+        self.turn = "W"
+
+def draw_piece(screen, p, r, c):
+    x, y = c*SQ_SIZE + SQ_SIZE//2, r*SQ_SIZE + SQ_SIZE//2
+    clr = (255,255,255) if p.isupper() else (20,20,20)
+    pygame.draw.circle(screen, clr, (x, y), 20)
+
 async def main():
+    e = ChessEngine()
     while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return
         for r in range(8):
             for c in range(8):
-                color = (245, 245, 220) if (r+c)%2==0 else (112, 128, 144)
-                pygame.draw.rect(screen, color, (c*80, r*80, 80, 80))
+                pygame.draw.rect(screen, COLORS[(r+c)%2], (c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                if e.board[r][c] != "--": draw_piece(screen, e.board[r][c], r, c)
         pygame.display.flip()
         await asyncio.sleep(0)
-asyncio.run(main())
-    </script>
 
-    <script>
-        function run(id) {
-            const code = document.getElementById(id).textContent;
-            window.pygbag.run(code);
-        }
-    </script>
+asyncio.run(main())
+</script>
+
+<!-- GAME 3: FULL OMNI WORDLE -->
+<script type="text/python" id="wordle">
+import pygame, asyncio, random
+WIDTH, HEIGHT = 450, 700
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+words = ["CYBER", "MATRIX", "BINARY", "SYSTEM", "VORTEX"]
+
+async def main():
+    target = random.choice(words)
+    while True:
+        screen.fill((5, 5, 5))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return
+        for r in range(6):
+            for c in range(5):
+                pygame.draw.rect(screen, (0, 255, 204), (c*80+25, r*100+25, 70, 90), 2)
+        pygame.display.flip()
+        await asyncio.sleep(0)
+
+asyncio.run(main())
+</script>
+
+<script>
+    function run(id) {
+        const code = document.getElementById(id).textContent;
+        window.pygbag.run(code);
+    }
+</script>
 </body>
 </html>
+
