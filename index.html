@@ -1,70 +1,366 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>School Game Hub</title>
-    <!-- This runs Python in the browser without being blocked by school filters -->
     <script src="https://pygame-web.github.io" data-shell="minimal"></script>
-    <style>
-        body { background: #000; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        #canvas { width: 100vw; max-width: 640px; aspect-ratio: 1/1; border: 2px solid #333; }
-        #status { color: #0f0; font-family: monospace; padding: 10px; }
-    </style>
 </head>
-<body>
-    <div id="status">TAP SCREEN OR PRESS 1, 2, 3 TO START</div>
+<body style="background:#000; margin:0; display:flex; justify-content:center;">
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
-
-    <script type="application/json" id="config">{"xterm": false, "stats": false, "speed": 1}</script>
+    <script type="application/json" id="config">{"xterm":false,"stats":false,"speed":1}</script>
 
 <script type="text/python" id="main.py">
 import asyncio
 import pygame
 import random
+
+# --- GAME 1: WORDLE ---
+async def start_wordle(screen):
+    # PASTE YOUR FULL WORDLE CODE HERE (INDENTED)import tkinter as tk
+import random
+import asyncio # ADDED
 import sys
 
-# --- GAME HUB WRAPPER ---
-# This part makes your buttons work for mobile and computer.
-# Paste your 3 full codes below as functions (run_wordle, run_flappy, run_chess).
+class OmniWordle:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("ULTIMATE_OMNI_WORDLE")
+        self.root.geometry("450x780")
+        self.root.configure(bg="#050505")
 
+        self.valid_words = {
+            "HELLO", "WORLD", "APPLE", "BEACH", "CHAIR", "DANCE", "EAGLE", "FRUIT", 
+            "GRAPE", "HOUSE", "IMAGE", "JUICE", "KNIFE", "LEMON", "MONEY", "NIGHT", 
+            "OCEAN", "PIANO", "QUEEN", "RADIO", "SHELF", "TABLE", "UNDER", "VOICE", 
+            "WATER", "YOUTH", "ZEBRA", "BREAD", "CLOCK", "DREAM", "EARTH", "FIELD", 
+            "GLASS", "HEART", "LIGHT", "MUSIC", "PAPER", "RIVER", "SHIRT", "TRAIN",
+            "CYBER", "PULSE", "HACKER", "SYSTEM", "MATRIX", "VORTEX", "BINARY",
+            "SMILE", "STORE", "PLANT", "SPACE", "POWER", "THINK", "ALIVE", "BRICK",
+            "COAST", "DAIRY", "ENTRY", "FLAME", "GRAND", "HOTEL", "INDEX", "JOLLY",
+            "KNEEL", "LUCKY", "MATCH", "NOBLE", "ORDER", "PATCH", "QUIET", "ROUGH",
+            "SUGAR", "TIGER", "UNITS", "VALUE", "WHEEL", "YEARS", "ABOUT", "ALARM",
+            "BLAST", "CLEAN", "DRINK", "EMPTY", "FRESH", "GREEN", "HAPPY", "INPUT",
+            "JUDGE", "LARGE", "MARCH", "NEVER", "OTHER", "PHONE", "QUICK", "RAISE",
+            "SHARE", "TOTAL", "UNTIL", "VISIT", "WATCH", "YOUNG", "LEVEL", "PIZZA",
+            "STORM", "VIVID"
+        }
+        
+        self.setup_ui()
+        self.start_game()
+
+    def setup_ui(self):
+        tk.Label(self.root, text="WORD DECRYPTOR", bg="#050505", fg="#00ffcc", 
+                 font=("Impact", 24)).pack(pady=10)
+
+        self.status_label = tk.Label(self.root, text="SYSTEM READY", bg="#050505", 
+                                     fg="#888", font=("Arial", 12, "bold"))
+        self.status_label.pack(pady=5)
+
+        self.grid_frame = tk.Frame(self.root, bg="#050505")
+        self.grid_frame.pack()
+
+        self.entry = tk.Entry(self.root, font=("Arial", 20), justify="center", width=12,
+                             bg="#111", fg="#00ffcc", insertbackground="white")
+        self.entry.pack(pady=15)
+        self.entry.bind("<Return>", lambda e: self.process_guess())
+        
+        btn_frame = tk.Frame(self.root, bg="#050505")
+        btn_frame.pack(pady=10)
+
+        tk.Button(btn_frame, text="SUBMIT", command=self.process_guess, width=10,
+                  bg="#00ffcc", fg="black", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+        
+        tk.Button(btn_frame, text="RESTART", command=self.start_game, width=10,
+                  bg="#444", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+
+    def start_game(self):
+        self.target = random.choice(list(self.valid_words)).upper()
+        self.attempts = 0
+        self.max_attempts = 6
+        self.game_over = False
+        self.used_guesses = set()
+        self.status_label.config(text="ENTER 5 LETTERS", fg="#888")
+        
+        for widget in self.grid_frame.winfo_children():
+            widget.destroy()
+
+        self.cells = []
+        for r in range(self.max_attempts):
+            row_cells = []
+            for c in range(5):
+                lbl = tk.Label(self.grid_frame, text="", width=4, height=2, 
+                               fg="white", bg="#111", font=("Arial", 16, "bold"))
+                lbl.grid(row=r, column=c, padx=4, pady=4)
+                row_cells.append(lbl)
+            self.cells.append(row_cells)
+        
+        self.entry.delete(0, tk.END)
+        self.entry.focus_set()
+
+    def process_guess(self):
+        if self.game_over: return
+        guess = self.entry.get().upper().strip()
+        
+        if len(guess) != 5:
+            self.status_label.config(text="ERROR: MUST BE 5 LETTERS", fg="red")
+            return
+        if guess not in self.valid_words:
+            self.status_label.config(text="ERROR: NOT IN SYSTEM WORDLIST", fg="red")
+            return
+        if guess in self.used_guesses:
+            self.status_label.config(text=f"ERROR: '{guess}' ALREADY USED", fg="#ffaa00")
+            return
+
+        self.used_guesses.add(guess)
+        target_chars = list(self.target)
+        result_colors = ["#333"] * 5 
+
+        # Green Check
+        for i in range(5):
+            if guess[i] == target_chars[i]:
+                result_colors[i] = "green"
+                target_chars[i] = None
+
+        # Orange Check
+        for i in range(5):
+            if result_colors[i] == "#333" and guess[i] in target_chars:
+                if guess[i] is not None:
+                    result_colors[i] = "orange"
+                    target_chars[target_chars.index(guess[i])] = None
+
+        # Grid Update
+        for i in range(5):
+            self.cells[self.attempts][i].config(text=guess[i], bg=result_colors[i])
+
+        if guess == self.target:
+            self.status_label.config(text="CORRECT!", fg="#00ffcc")
+            self.game_over = True
+        elif self.attempts == self.max_attempts - 1:
+            self.status_label.config(text=f"WRONG! CODE WAS: {self.target}", fg="red")
+            self.game_over = True
+        else:
+            self.status_label.config(text="DATA INJECTED...", fg="#888")
+            self.attempts += 1
+            self.entry.delete(0, tk.END)
+
+# --- WEB WRAPPER ---
 async def main():
-    pygame.init()
-    screen = pygame.display.set_mode((640, 640))
-    font = pygame.font.SysFont("Arial", 40, bold=True)
+    root = tk.Tk()
+    app = OmniWordle(root)
     
     while True:
-        screen.fill((10, 10, 10))
-        # Draw Visual Buttons for the Menu
-        btn1 = pygame.draw.rect(screen, (0, 200, 150), (120, 100, 400, 80), border_radius=12)
-        btn2 = pygame.draw.rect(screen, (255, 180, 0), (120, 250, 400, 80), border_radius=12)
-        btn3 = pygame.draw.rect(screen, (100, 100, 255), (120, 400, 400, 80), border_radius=12)
-        
-        screen.blit(font.render("1: WORDLE", True, (0,0,0)), (210, 115))
-        screen.blit(font.render("2: FLAPPY", True, (0,0,0)), (210, 265))
-        screen.blit(font.render("3: CHESS", True, (0,0,0)), (225, 415))
+        try:
+            root.update()
+        except tk.TclError:
+            break
+        await asyncio.sleep(0) # REQUIRED FOR WEB
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT: return
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = event.pos
-                if btn1.collidepoint(pos): await run_wordle(screen)
-                if btn2.collidepoint(pos): await run_flappy(screen)
-                if btn3.collidepoint(pos): await run_chess(screen)
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1: await run_wordle(screen)
-                if event.key == pygame.K_2: await run_flappy(screen)
-                if event.key == pygame.K_3: await run_chess(screen)
+if __name__ == "__main__":
+    asyncio.run(main())
 
-        pygame.display.flip()
-        await asyncio.sleep(0) # CRITICAL: This keeps the page from freezing
+    # REPLACE root.update() with pygame.display.flip()
+    await asyncio.sleep(0)
 
-# --- PASTE YOUR 3 FULL CODES BELOW THIS LINE ---
-# IMPORTANT: Indent your code blocks and rename their 'main' to 'run_wordle', etc.
+# --- GAME 2: FLAPPY ---
+async def start_flappy(screen):
+   import pygame
+import random
+import os
+import sys
+import asyncio # ADDED for web support
+import platform # ADDED to check for web environment
+
+# --- CONFIGURATION ---
+WIDTH, HEIGHT = 400, 600
+GRAVITY = 0.25
+FLAP_POWER = -6.5
+PIPE_SPEED = 3
+GAP_SIZE = 155
+GROUND_HEIGHT = 100
+
+# Colors
+SKY = (113, 197, 207)
+BIRD_YELLOW = (247, 203, 30)
+BIRD_DARK_YELLOW = (200, 160, 20)
+PIPE_GREEN = (115, 191, 46)
+PIPE_DARK = (83, 128, 34)
+GROUND_BASE = (222, 216, 149)
+GROUND_GRASS = (158, 225, 124)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GOLD = (255, 215, 0)
+SILVER = (192, 192, 192)
+BRONZE = (205, 127, 50)
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Flappy Bird 2026")
+clock = pygame.time.Clock()
+font_score = pygame.font.SysFont("arial", 50, bold=True)
+font_ui = pygame.font.SysFont("arial", 25, bold=True)
+
+# --- DETAILED BIRD ---
+def draw_detailed_bird(surf, x, y, vel, timer):
+    tilt = max(-90, min(30, -vel * 3))
+    flap = (timer // 5) % 3 
+    bird_surf = pygame.Surface((50, 40), pygame.SRCALPHA)
     
-# --- PASTE YOUR FULL WORDLE CODE HERE ---
- async def run_wordle():
-    # [PASTE EVERYTHING FROM YOUR WORDLE .PY HERE]# --- CONFIG ---
+    pygame.draw.polygon(bird_surf, BIRD_DARK_YELLOW, [(0, 15), (10, 10), (10, 25)])
+    pygame.draw.polygon(bird_surf, BLACK, [(0, 15), (10, 10), (10, 25)], 2)
+    pygame.draw.ellipse(bird_surf, BLACK, (5, 5, 40, 30))
+    pygame.draw.ellipse(bird_surf, BIRD_YELLOW, (7, 7, 36, 26))
+    pygame.draw.ellipse(bird_surf, BIRD_DARK_YELLOW, (7, 20, 30, 10))
+    pygame.draw.ellipse(bird_surf, WHITE, (25, 8, 16, 14))
+    pygame.draw.ellipse(bird_surf, BLACK, (25, 8, 16, 14), 2)
+    pygame.draw.circle(bird_surf, BLACK, (34, 15), 3)
+    pygame.draw.polygon(bird_surf, (247, 95, 30), [(38, 18), (48, 22), (38, 25)])
+    pygame.draw.polygon(bird_surf, (255, 130, 50), [(38, 14), (50, 18), (38, 22)])
+    wing_y = 12 + (flap * 2)
+    pygame.draw.ellipse(bird_surf, WHITE, (10, wing_y, 20, 12))
+    pygame.draw.ellipse(bird_surf, BLACK, (10, wing_y, 20, 12), 2)
+    
+    rotated = pygame.transform.rotate(bird_surf, tilt)
+    surf.blit(rotated, (x, y))
+
+# --- SYSTEMS (MODIFIED FOR WEB) ---
+def get_hs():
+    if platform.system() == "Emscripten": # If running in browser
+        from platform import window
+        return int(window.localStorage.getItem("flappy_hs") or 0)
+    
+    path = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), "highscore.txt")
+    if not os.path.exists(path): return 0
+    with open(path, "r") as f:
+        try: return int(f.read())
+        except: return 0
+
+def save_hs(s):
+    if platform.system() == "Emscripten": # If running in browser
+        from platform import window
+        window.localStorage.setItem("flappy_hs", str(s))
+        return
+        
+    path = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), "highscore.txt")
+    with open(path, "w") as f: f.write(str(s))
+
+def draw_pipe(surf, x, y, length, is_top):
+    pipe_rect = pygame.Rect(x, y, 60, length)
+    pygame.draw.rect(surf, PIPE_GREEN, pipe_rect)
+    pygame.draw.rect(surf, BLACK, pipe_rect, 3)
+    pygame.draw.rect(surf, (158, 225, 124), (x+5, y, 10, length))
+    pygame.draw.rect(surf, PIPE_DARK, (x+45, y, 10, length))
+    lip_y = y + length - 30 if is_top else y
+    lip_rect = pygame.Rect(x - 5, lip_y, 70, 30)
+    pygame.draw.rect(surf, PIPE_GREEN, lip_rect)
+    pygame.draw.rect(surf, BLACK, lip_rect, 3)
+
+# --- GAME LOGIC (ADDED ASYNC) ---
+async def run_game():
+    bird_y, bird_vel = HEIGHT//2, 0
+    pipes = [] 
+    score, timer, ground_scroll = 0, 0, 0
+
+    while True:
+        screen.fill(SKY)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return "QUIT", 0
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                bird_vel = FLAP_POWER
+
+        bird_vel += GRAVITY
+        bird_y += bird_vel
+        bird_rect = pygame.Rect(65, bird_y+10, 35, 25)
+
+        timer += 1
+        if timer % 90 == 0: 
+            pipes.append([WIDTH, random.randint(100, HEIGHT-GROUND_HEIGHT-GAP_SIZE-50)])
+
+        for p in pipes[:]:
+            p[0] -= PIPE_SPEED 
+            draw_pipe(screen, p[0], 0, p[1], True)
+            draw_pipe(screen, p[0], p[1]+GAP_SIZE, HEIGHT, False)
+            
+            top_r = pygame.Rect(p[0], 0, 60, p[1])
+            bot_r = pygame.Rect(p[0], p[1]+GAP_SIZE, 60, HEIGHT)
+            
+            if bird_rect.colliderect(top_r) or bird_rect.colliderect(bot_r): return "DEATH", score
+            if p[0] < -70: 
+                pipes.remove(p)
+                score += 1
+
+        if bird_y > HEIGHT-GROUND_HEIGHT-30 or bird_y < 0: return "DEATH", score
+
+        ground_scroll = (ground_scroll - PIPE_SPEED) % 40
+        pygame.draw.rect(screen, GROUND_BASE, (0, HEIGHT-GROUND_HEIGHT, WIDTH, GROUND_HEIGHT))
+        pygame.draw.rect(screen, GROUND_GRASS, (0, HEIGHT-GROUND_HEIGHT, WIDTH, 15))
+        for i in range(-40, WIDTH + 40, 40):
+            pygame.draw.line(screen, BLACK, (i + ground_scroll, HEIGHT-GROUND_HEIGHT), (i + ground_scroll - 20, HEIGHT), 2)
+        
+        draw_detailed_bird(screen, 60, bird_y, bird_vel, timer)
+        s_img = font_score.render(str(score), True, WHITE)
+        screen.blit(s_img, (WIDTH//2 - s_img.get_width()//2, 50))
+        
+        pygame.display.update()
+        await asyncio.sleep(0) # ADDED for Pygbag
+        clock.tick(60)
+
+async def main_menu(state, score):
+    hs = get_hs()
+    if score > hs: 
+        save_hs(score)
+        hs = score
+    
+    while True:
+        screen.fill(SKY)
+        title = "GAME OVER" if state == "DEATH" else "FLAPPY BIRD"
+        t_color = (200, 0, 0) if state == "DEATH" else WHITE
+        t_img = font_score.render(title, True, t_color)
+        screen.blit(t_img, (WIDTH//2 - t_img.get_width()//2, 100))
+        
+        if state == "DEATH":
+            medal_color = None
+            if score >= 30: medal_color = GOLD
+            elif score >= 20: medal_color = SILVER
+            elif score >= 10: medal_color = BRONZE
+            if medal_color:
+                pygame.draw.circle(screen, BLACK, (WIDTH//2, 220), 32)
+                pygame.draw.circle(screen, medal_color, (WIDTH//2, 220), 28)
+
+        info = font_ui.render(f"Score: {score}  |  Best: {hs}", True, BLACK)
+        screen.blit(info, (WIDTH//2 - info.get_width()//2, 300))
+        hint = font_ui.render("[ PRESS SPACE TO FLY ]", True, WHITE)
+        screen.blit(hint, (WIDTH//2 - hint.get_width()//2, 400))
+
+        pygame.display.update()
+        await asyncio.sleep(0) # ADDED for Pygbag
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT: return "QUIT"
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE: return "PLAY"
+
+# --- MAIN LOOP (CONVERTED TO ASYNC) ---
+async def main():
+    curr_state, last_s = "MENU", 0
+    while curr_state != "QUIT":
+        if curr_state in ["MENU", "DEATH"]:
+            curr_state = await main_menu(curr_state, last_s)
+        else:
+            curr_state, last_s = await run_game()
+    pygame.quit()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+    await asyncio.sleep(0)
+
+# --- GAME 3: CHESS ---
+async def start_chess(screen):
+    import pygame
+import random
+import time
+import sys
+import os
+import asyncio # ADDED
+import platform # ADDED
+
+# --- CONFIG ---
 WIDTH, HEIGHT = 640, 640
 SQ_SIZE = WIDTH // 8
 COLORS = [(245, 245, 220), (112, 128, 144)]
@@ -239,333 +535,39 @@ async def main():
             screen.blit(font.render(res, True, (255,50,50)), (WIDTH//2-130, HEIGHT//2-30))
 
         pygame.display.flip()
-    # Ensure your 'while' loops use: await asyncio.sleep(0)
-    pass
-
-# --- PASTE YOUR FULL FLAPPY BIRD CODE HERE ---
-async def run_flappy():
-    # [PASTE EVERYTHING FROM YOUR FLAPPY .PY HERE]# --- CONFIGURATION ---
- WIDTH, HEIGHT = 400, 600
- GRAVITY = 0.25
- FLAP_POWER = -6.5
-PIPE_SPEED = 3
- GAP_SIZE = 155
- GROUND_HEIGHT = 100
-
-# Colors
-SKY = (113, 197, 207)
-BIRD_YELLOW = (247, 203, 30)
-BIRD_DARK_YELLOW = (200, 160, 20)
-PIPE_GREEN = (115, 191, 46)
-PIPE_DARK = (83, 128, 34)
-GROUND_BASE = (222, 216, 149)
-GROUND_GRASS = (158, 225, 124)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GOLD = (255, 215, 0)
-SILVER = (192, 192, 192)
-BRONZE = (205, 127, 50)
-
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flappy Bird 2026")
-clock = pygame.time.Clock()
-font_score = pygame.font.SysFont("arial", 50, bold=True)
-font_ui = pygame.font.SysFont("arial", 25, bold=True)
-
-# --- DETAILED BIRD ---
-def draw_detailed_bird(surf, x, y, vel, timer):
-    tilt = max(-90, min(30, -vel * 3))
-    flap = (timer // 5) % 3 
-    bird_surf = pygame.Surface((50, 40), pygame.SRCALPHA)
-    
-    pygame.draw.polygon(bird_surf, BIRD_DARK_YELLOW, [(0, 15), (10, 10), (10, 25)])
-    pygame.draw.polygon(bird_surf, BLACK, [(0, 15), (10, 10), (10, 25)], 2)
-    pygame.draw.ellipse(bird_surf, BLACK, (5, 5, 40, 30))
-    pygame.draw.ellipse(bird_surf, BIRD_YELLOW, (7, 7, 36, 26))
-    pygame.draw.ellipse(bird_surf, BIRD_DARK_YELLOW, (7, 20, 30, 10))
-    pygame.draw.ellipse(bird_surf, WHITE, (25, 8, 16, 14))
-    pygame.draw.ellipse(bird_surf, BLACK, (25, 8, 16, 14), 2)
-    pygame.draw.circle(bird_surf, BLACK, (34, 15), 3)
-    pygame.draw.polygon(bird_surf, (247, 95, 30), [(38, 18), (48, 22), (38, 25)])
-    pygame.draw.polygon(bird_surf, (255, 130, 50), [(38, 14), (50, 18), (38, 22)])
-    wing_y = 12 + (flap * 2)
-    pygame.draw.ellipse(bird_surf, WHITE, (10, wing_y, 20, 12))
-    pygame.draw.ellipse(bird_surf, BLACK, (10, wing_y, 20, 12), 2)
-    
-    rotated = pygame.transform.rotate(bird_surf, tilt)
-    surf.blit(rotated, (x, y))
-
-# --- SYSTEMS (MODIFIED FOR WEB) ---
-def get_hs():
-    if platform.system() == "Emscripten": # If running in browser
-        from platform import window
-        return int(window.localStorage.getItem("flappy_hs") or 0)
-    
-    path = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), "highscore.txt")
-    if not os.path.exists(path): return 0
-    with open(path, "r") as f:
-        try: return int(f.read())
-        except: return 0
-
-def save_hs(s):
-    if platform.system() == "Emscripten": # If running in browser
-        from platform import window
-        window.localStorage.setItem("flappy_hs", str(s))
-        return
-        
-    path = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), "highscore.txt")
-    with open(path, "w") as f: f.write(str(s))
-
-def draw_pipe(surf, x, y, length, is_top):
-    pipe_rect = pygame.Rect(x, y, 60, length)
-    pygame.draw.rect(surf, PIPE_GREEN, pipe_rect)
-    pygame.draw.rect(surf, BLACK, pipe_rect, 3)
-    pygame.draw.rect(surf, (158, 225, 124), (x+5, y, 10, length))
-    pygame.draw.rect(surf, PIPE_DARK, (x+45, y, 10, length))
-    lip_y = y + length - 30 if is_top else y
-    lip_rect = pygame.Rect(x - 5, lip_y, 70, 30)
-    pygame.draw.rect(surf, PIPE_GREEN, lip_rect)
-    pygame.draw.rect(surf, BLACK, lip_rect, 3)
-
-# --- GAME LOGIC (ADDED ASYNC) ---
-async def run_game():
-    bird_y, bird_vel = HEIGHT//2, 0
-    pipes = [] 
-    score, timer, ground_scroll = 0, 0, 0
-
-    while True:
-        screen.fill(SKY)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT: return "QUIT", 0
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                bird_vel = FLAP_POWER
-
-        bird_vel += GRAVITY
-        bird_y += bird_vel
-        bird_rect = pygame.Rect(65, bird_y+10, 35, 25)
-
-        timer += 1
-        if timer % 90 == 0: 
-            pipes.append([WIDTH, random.randint(100, HEIGHT-GROUND_HEIGHT-GAP_SIZE-50)])
-
-        for p in pipes[:]:
-            p[0] -= PIPE_SPEED 
-            draw_pipe(screen, p[0], 0, p[1], True)
-            draw_pipe(screen, p[0], p[1]+GAP_SIZE, HEIGHT, False)
-            
-            top_r = pygame.Rect(p[0], 0, 60, p[1])
-            bot_r = pygame.Rect(p[0], p[1]+GAP_SIZE, 60, HEIGHT)
-            
-            if bird_rect.colliderect(top_r) or bird_rect.colliderect(bot_r): return "DEATH", score
-            if p[0] < -70: 
-                pipes.remove(p)
-                score += 1
-
-        if bird_y > HEIGHT-GROUND_HEIGHT-30 or bird_y < 0: return "DEATH", score
-
-        ground_scroll = (ground_scroll - PIPE_SPEED) % 40
-        pygame.draw.rect(screen, GROUND_BASE, (0, HEIGHT-GROUND_HEIGHT, WIDTH, GROUND_HEIGHT))
-        pygame.draw.rect(screen, GROUND_GRASS, (0, HEIGHT-GROUND_HEIGHT, WIDTH, 15))
-        for i in range(-40, WIDTH + 40, 40):
-            pygame.draw.line(screen, BLACK, (i + ground_scroll, HEIGHT-GROUND_HEIGHT), (i + ground_scroll - 20, HEIGHT), 2)
-        
-        draw_detailed_bird(screen, 60, bird_y, bird_vel, timer)
-        s_img = font_score.render(str(score), True, WHITE)
-        screen.blit(s_img, (WIDTH//2 - s_img.get_width()//2, 50))
-        
-        pygame.display.update()
-        await asyncio.sleep(0) # ADDED for Pygbag
-        clock.tick(60)
-
-async def main_menu(state, score):
-    hs = get_hs()
-    if score > hs: 
-        save_hs(score)
-        hs = score
-    
-    while True:
-        screen.fill(SKY)
-        title = "GAME OVER" if state == "DEATH" else "FLAPPY BIRD"
-        t_color = (200, 0, 0) if state == "DEATH" else WHITE
-        t_img = font_score.render(title, True, t_color)
-        screen.blit(t_img, (WIDTH//2 - t_img.get_width()//2, 100))
-        
-        if state == "DEATH":
-            medal_color = None
-            if score >= 30: medal_color = GOLD
-            elif score >= 20: medal_color = SILVER
-            elif score >= 10: medal_color = BRONZE
-            if medal_color:
-                pygame.draw.circle(screen, BLACK, (WIDTH//2, 220), 32)
-                pygame.draw.circle(screen, medal_color, (WIDTH//2, 220), 28)
-
-        info = font_ui.render(f"Score: {score}  |  Best: {hs}", True, BLACK)
-        screen.blit(info, (WIDTH//2 - info.get_width()//2, 300))
-        hint = font_ui.render("[ PRESS SPACE TO FLY ]", True, WHITE)
-        screen.blit(hint, (WIDTH//2 - hint.get_width()//2, 400))
-
-        pygame.display.update()
-        await asyncio.sleep(0) # ADDED for Pygbag
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT: return "QUIT"
-            if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE: return "PLAY"
-
-# --- MAIN LOOP (CONVERTED TO ASYNC) ---
-    # Ensure your 'while' loops use: await asyncio.sleep(0)
-    pass
-
-# --- PASTE YOUR FULL CHESS CODE HERE ---
- async def run_chess():
-    # [PASTE EVERYTHING FROM YOUR CHESS .PY HERE]
-class OmniWordle:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("ULTIMATE_OMNI_WORDLE")
-        self.root.geometry("450x780")
-        self.root.configure(bg="#050505")
-
-        self.valid_words = {
-            "HELLO", "WORLD", "APPLE", "BEACH", "CHAIR", "DANCE", "EAGLE", "FRUIT", 
-            "GRAPE", "HOUSE", "IMAGE", "JUICE", "KNIFE", "LEMON", "MONEY", "NIGHT", 
-            "OCEAN", "PIANO", "QUEEN", "RADIO", "SHELF", "TABLE", "UNDER", "VOICE", 
-            "WATER", "YOUTH", "ZEBRA", "BREAD", "CLOCK", "DREAM", "EARTH", "FIELD", 
-            "GLASS", "HEART", "LIGHT", "MUSIC", "PAPER", "RIVER", "SHIRT", "TRAIN",
-            "CYBER", "PULSE", "HACKER", "SYSTEM", "MATRIX", "VORTEX", "BINARY",
-            "SMILE", "STORE", "PLANT", "SPACE", "POWER", "THINK", "ALIVE", "BRICK",
-            "COAST", "DAIRY", "ENTRY", "FLAME", "GRAND", "HOTEL", "INDEX", "JOLLY",
-            "KNEEL", "LUCKY", "MATCH", "NOBLE", "ORDER", "PATCH", "QUIET", "ROUGH",
-            "SUGAR", "TIGER", "UNITS", "VALUE", "WHEEL", "YEARS", "ABOUT", "ALARM",
-            "BLAST", "CLEAN", "DRINK", "EMPTY", "FRESH", "GREEN", "HAPPY", "INPUT",
-            "JUDGE", "LARGE", "MARCH", "NEVER", "OTHER", "PHONE", "QUICK", "RAISE",
-            "SHARE", "TOTAL", "UNTIL", "VISIT", "WATCH", "YOUNG", "LEVEL", "PIZZA",
-            "STORM", "VIVID"
-        }
-        
-        self.setup_ui()
-        self.start_game()
-
-    def setup_ui(self):
-        tk.Label(self.root, text="WORD DECRYPTOR", bg="#050505", fg="#00ffcc", 
-                 font=("Impact", 24)).pack(pady=10)
-
-        self.status_label = tk.Label(self.root, text="SYSTEM READY", bg="#050505", 
-                                     fg="#888", font=("Arial", 12, "bold"))
-        self.status_label.pack(pady=5)
-
-        self.grid_frame = tk.Frame(self.root, bg="#050505")
-        self.grid_frame.pack()
-
-        self.entry = tk.Entry(self.root, font=("Arial", 20), justify="center", width=12,
-                             bg="#111", fg="#00ffcc", insertbackground="white")
-        self.entry.pack(pady=15)
-        self.entry.bind("<Return>", lambda e: self.process_guess())
-        
-        btn_frame = tk.Frame(self.root, bg="#050505")
-        btn_frame.pack(pady=10)
-
-        tk.Button(btn_frame, text="SUBMIT", command=self.process_guess, width=10,
-                  bg="#00ffcc", fg="black", font=("Arial", 10, "bold")).pack(side="left", padx=5)
-        
-        tk.Button(btn_frame, text="RESTART", command=self.start_game, width=10,
-                  bg="#444", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
-
-    def start_game(self):
-        self.target = random.choice(list(self.valid_words)).upper()
-        self.attempts = 0
-        self.max_attempts = 6
-        self.game_over = False
-        self.used_guesses = set()
-        self.status_label.config(text="ENTER 5 LETTERS", fg="#888")
-        
-        for widget in self.grid_frame.winfo_children():
-            widget.destroy()
-
-        self.cells = []
-        for r in range(self.max_attempts):
-            row_cells = []
-            for c in range(5):
-                lbl = tk.Label(self.grid_frame, text="", width=4, height=2, 
-                               fg="white", bg="#111", font=("Arial", 16, "bold"))
-                lbl.grid(row=r, column=c, padx=4, pady=4)
-                row_cells.append(lbl)
-            self.cells.append(row_cells)
-        
-        self.entry.delete(0, tk.END)
-        self.entry.focus_set()
-
-    def process_guess(self):
-        if self.game_over: return
-        guess = self.entry.get().upper().strip()
-        
-        if len(guess) != 5:
-            self.status_label.config(text="ERROR: MUST BE 5 LETTERS", fg="red")
-            return
-        if guess not in self.valid_words:
-            self.status_label.config(text="ERROR: NOT IN SYSTEM WORDLIST", fg="red")
-            return
-        if guess in self.used_guesses:
-            self.status_label.config(text=f"ERROR: '{guess}' ALREADY USED", fg="#ffaa00")
-            return
-
-        self.used_guesses.add(guess)
-        target_chars = list(self.target)
-        result_colors = ["#333"] * 5 
-
-        # Green Check
-        for i in range(5):
-            if guess[i] == target_chars[i]:
-                result_colors[i] = "green"
-                target_chars[i] = None
-
-        # Orange Check
-        for i in range(5):
-            if result_colors[i] == "#333" and guess[i] in target_chars:
-                if guess[i] is not None:
-                    result_colors[i] = "orange"
-                    target_chars[target_chars.index(guess[i])] = None
-
-        # Grid Update
-        for i in range(5):
-            self.cells[self.attempts][i].config(text=guess[i], bg=result_colors[i])
-
-        if guess == self.target:
-            self.status_label.config(text="CORRECT!", fg="#00ffcc")
-            self.game_over = True
-        elif self.attempts == self.max_attempts - 1:
-            self.status_label.config(text=f"WRONG! CODE WAS: {self.target}", fg="red")
-            self.game_over = True
-        else:
-            self.status_label.config(text="DATA INJECTED...", fg="#888")
-            self.attempts += 1
-            self.entry.delete(0, tk.END)
-
-# --- WEB WRAPPER ---
-async def main():
-    root = tk.Tk()
-    app = OmniWordle(root)
-    
-    while True:
-        try:
-            root.update()
-        except tk.TclError:
-            break
         await asyncio.sleep(0) # REQUIRED FOR WEB
 
+if __name__ == "__main__":
+    asyncio.run(main())
 
-    # Ensure your 'while' loops use: await asyncio.sleep(0)
-    pass
+    await asyncio.sleep(0)
 
-async def main_hub():
+async def main():
     pygame.init()
     screen = pygame.display.set_mode((640, 640))
-    # Simple Menu to select which full code to run
-    print("Select Game: 1=Wordle, 2=Flappy, 3=Chess")
-    # For now, we will run the first one you want to test
-    await run_flappy() # Change this to the game you want to start first
+    font = pygame.font.SysFont("Arial", 40)
+    
+    while True:
+        screen.fill((20, 20, 20))
+        # Visual Buttons
+        b1 = pygame.draw.rect(screen, (0, 200, 150), (120, 100, 400, 80))
+        b2 = pygame.draw.rect(screen, (255, 180, 0), (120, 250, 400, 80))
+        b3 = pygame.draw.rect(screen, (100, 100, 255), (120, 400, 400, 80))
+        
+        screen.blit(font.render("PLAY WORDLE", True, (0,0,0)), (180, 120))
+        screen.blit(font.render("PLAY FLAPPY", True, (0,0,0)), (180, 270))
+        screen.blit(font.render("PLAY CHESS", True, (0,0,0)), (180, 420))
 
-if __name__ == "__main__":
-    asyncio.run(main_hub())
-    </script>
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if b1.collidepoint(event.pos): await start_wordle(screen)
+                if b2.collidepoint(event.pos): await start_flappy(screen)
+                if b3.collidepoint(event.pos): await start_chess(screen)
+
+        pygame.display.flip()
+        await asyncio.sleep(0) # <--- WITHOUT THIS, THE SCREEN IS BLACK
+
+asyncio.run(main())
+</script>
 </body>
 </html>
