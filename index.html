@@ -3,31 +3,66 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>Original Game Hub</title>
+    <title>School Game Hub</title>
+    <!-- This runs Python in the browser without being blocked by school filters -->
     <script src="https://pygame-web.github.io" data-shell="minimal"></script>
     <style>
         body { background: #000; margin: 0; display: flex; flex-direction: column; align-items: center; }
         #canvas { width: 100vw; max-width: 640px; aspect-ratio: 1/1; border: 2px solid #333; }
-        #nav { padding: 10px; background: #111; width: 100%; text-align: center; }
-        button { background: #222; color: #0f0; border: 1px solid #0f0; padding: 10px; margin: 5px; cursor: pointer; }
+        #status { color: #0f0; font-family: monospace; padding: 10px; }
     </style>
 </head>
 <body>
-    <div id="nav">
-        <button onclick="location.reload()">REFRESH / HOME</button>
-    </div>
+    <div id="status">TAP SCREEN OR PRESS 1, 2, 3 TO START</div>
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
 
     <script type="application/json" id="config">{"xterm": false, "stats": false, "speed": 1}</script>
 
-    <script type="text/python" id="main.py">
+<script type="text/python" id="main.py">
 import asyncio
 import pygame
 import random
 import sys
-import os
 import time
+
+# --- GAME HUB WRAPPER ---
+# This part makes your buttons work for mobile and computer.
+# Paste your 3 full codes below as functions (run_wordle, run_flappy, run_chess).
+
+async def main():
+    pygame.init()
+    screen = pygame.display.set_mode((640, 640))
+    font = pygame.font.SysFont("Arial", 40, bold=True)
+    
+    while True:
+        screen.fill((10, 10, 10))
+        # Draw Visual Buttons for the Menu
+        btn1 = pygame.draw.rect(screen, (0, 200, 150), (120, 100, 400, 80), border_radius=12)
+        btn2 = pygame.draw.rect(screen, (255, 180, 0), (120, 250, 400, 80), border_radius=12)
+        btn3 = pygame.draw.rect(screen, (100, 100, 255), (120, 400, 400, 80), border_radius=12)
         
+        screen.blit(font.render("1: WORDLE", True, (0,0,0)), (210, 115))
+        screen.blit(font.render("2: FLAPPY", True, (0,0,0)), (210, 265))
+        screen.blit(font.render("3: CHESS", True, (0,0,0)), (225, 415))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                if btn1.collidepoint(pos): await run_wordle(screen)
+                if btn2.collidepoint(pos): await run_flappy(screen)
+                if btn3.collidepoint(pos): await run_chess(screen)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1: await run_wordle(screen)
+                if event.key == pygame.K_2: await run_flappy(screen)
+                if event.key == pygame.K_3: await run_chess(screen)
+
+        pygame.display.flip()
+        await asyncio.sleep(0) # CRITICAL: This keeps the page from freezing
+
+# --- PASTE YOUR 3 FULL CODES BELOW THIS LINE ---
+# IMPORTANT: Indent your code blocks and rename their 'main' to 'run_wordle', etc.
+    
 # --- PASTE YOUR FULL WORDLE CODE HERE ---
 async def run_wordle():
     # [PASTE EVERYTHING FROM YOUR WORDLE .PY HERE]# --- CONFIG ---
