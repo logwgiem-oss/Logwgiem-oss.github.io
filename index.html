@@ -59,6 +59,8 @@
 
 <!-- PASTE YOUR WORDLE CODE HERE -->
 <script type="text/python" id="wordle-code">
+    // Add this line inside your init() function
+pyodide.canvas.setCanvas2D(document.getElementById("canvas"));
 import tkinter as tk
 import random
 import asyncio # ADDED
@@ -205,6 +207,8 @@ if __name__ == "__main__":
 
 <!-- PASTE YOUR FLAPPY CODE HERE -->
 <script type="text/python" id="flappy-code">
+    // Add this line inside your init() function
+pyodide.canvas.setCanvas2D(document.getElementById("canvas"));
 import pygame
 import random
 import os
@@ -396,6 +400,8 @@ if __name__ == "__main__":
 
 <!-- PASTE YOUR CHESS CODE HERE -->
 <script type="text/python" id="chess-code">
+    // Add this line inside your init() function
+pyodide.canvas.setCanvas2D(document.getElementById("canvas"));
 import pygame
 import random
 import time
