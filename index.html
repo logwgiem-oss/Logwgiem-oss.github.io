@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Ultimate School Game Hub</title>
+    <!-- Using the static Pygbag loader to avoid CDN tracking blocks -->
     <script src="https://pygame-web.github.io" data-shell="minimal"></script>
+    <style>
+        body { background: #000; margin: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        #canvas { width: 100vw; max-width: 600px; aspect-ratio: 1/1; border: 2px solid #333; touch-action: none; }
+    </style>
 </head>
-<body style="background:#000; margin:0; display:flex; justify-content:center;">
-    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
-    <script type="application/json" id="config">{"xterm":false,"stats":false,"speed":1}</script>
+<body oncontextmenu="event.preventDefault()">
+    <canvas id="canvas" tabindex="0"></canvas>
+    <script type="application/json" id="config">{"xterm": false, "stats": false, "speed": 1}</script>
 
 <script type="text/python" id="main.py">
 import asyncio
 import pygame
 import random
-
-# --- GAME 1: WORDLE ---
-async def start_wordle(screen):
-    # PASTE YOUR FULL WORDLE CODE HERE (INDENTED)import tkinter as tk
-import random
-import asyncio # ADDED
 import sys
 
-class OmniWordle:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("ULTIMATE_OMNI_WORDLE")
+# --- HOW TO ADD YOUR GAMES ---
+# Paste your full code inside these functions. 
+# IMPORTANT: Indent your code by 4 spaces.
+
+async def run_wordle(screen):
+    self.root.title("ULTIMATE_OMNI_WORDLE")
         self.root.geometry("450x780")
         self.root.configure(bg="#050505")
 
@@ -140,35 +144,11 @@ class OmniWordle:
             self.status_label.config(text="DATA INJECTED...", fg="#888")
             self.attempts += 1
             self.entry.delete(0, tk.END)
+    # In every 'while' loop, add: await asyncio.sleep(0)
+    pass
 
-# --- WEB WRAPPER ---
-async def main():
-    root = tk.Tk()
-    app = OmniWordle(root)
-    
-    while True:
-        try:
-            root.update()
-        except tk.TclError:
-            break
-        await asyncio.sleep(0) # REQUIRED FOR WEB
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
-    # REPLACE root.update() with pygame.display.flip()
-    await asyncio.sleep(0)
-
-# --- GAME 2: FLAPPY ---
-async def start_flappy(screen):
-   import pygame
-import random
-import os
-import sys
-import asyncio # ADDED for web support
-import platform # ADDED to check for web environment
-
-# --- CONFIGURATION ---
+async def run_flappy(screen):
+    # --- CONFIGURATION ---
 WIDTH, HEIGHT = 400, 600
 GRAVITY = 0.25
 FLAP_POWER = -6.5
@@ -344,23 +324,12 @@ async def main():
         else:
             curr_state, last_s = await run_game()
     pygame.quit()
+    # Inside your event loop, change 'K_SPACE' to:
+    # if event.type == pygame.MOUSEBUTTONDOWN or (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE):
+    pass
 
-if __name__ == "__main__":
-    asyncio.run(main())
-
-    await asyncio.sleep(0)
-
-# --- GAME 3: CHESS ---
-async def start_chess(screen):
-    import pygame
-import random
-import time
-import sys
-import os
-import asyncio # ADDED
-import platform # ADDED
-
-# --- CONFIG ---
+async def run_chess(screen):
+    # --- CONFIG ---
 WIDTH, HEIGHT = 640, 640
 SQ_SIZE = WIDTH // 8
 COLORS = [(245, 245, 220), (112, 128, 144)]
@@ -533,41 +502,41 @@ async def main():
         if e.game_over:
             res = "YOU WON!" if e.is_check("B", e.board) else "YOU LOST!" if e.is_check("W", e.board) else "STALEMATE!"
             screen.blit(font.render(res, True, (255,50,50)), (WIDTH//2-130, HEIGHT//2-30))
+    pass
 
-        pygame.display.flip()
-        await asyncio.sleep(0) # REQUIRED FOR WEB
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
-    await asyncio.sleep(0)
-
+# --- THE MENU (PC & PHONE COMPATIBLE) ---
 async def main():
     pygame.init()
     screen = pygame.display.set_mode((640, 640))
-    font = pygame.font.SysFont("Arial", 40)
+    font = pygame.font.SysFont("Arial", 45, bold=True)
     
     while True:
-        screen.fill((20, 20, 20))
-        # Visual Buttons
-        b1 = pygame.draw.rect(screen, (0, 200, 150), (120, 100, 400, 80))
-        b2 = pygame.draw.rect(screen, (255, 180, 0), (120, 250, 400, 80))
-        b3 = pygame.draw.rect(screen, (100, 100, 255), (120, 400, 400, 80))
+        screen.fill((10, 10, 10))
+        # Draw Menu Buttons
+        b1 = pygame.draw.rect(screen, (0, 255, 150), (120, 100, 400, 80), border_radius=15)
+        b2 = pygame.draw.rect(screen, (255, 200, 0), (120, 250, 400, 80), border_radius=15)
+        b3 = pygame.draw.rect(screen, (100, 100, 255), (120, 400, 400, 80), border_radius=15)
         
-        screen.blit(font.render("PLAY WORDLE", True, (0,0,0)), (180, 120))
-        screen.blit(font.render("PLAY FLAPPY", True, (0,0,0)), (180, 270))
-        screen.blit(font.render("PLAY CHESS", True, (0,0,0)), (180, 420))
+        screen.blit(font.render("1: WORDLE", True, (0,0,0)), (210, 115))
+        screen.blit(font.render("2: FLAPPY", True, (0,0,0)), (210, 265))
+        screen.blit(font.render("3: CHESS", True, (0,0,0)), (225, 415))
 
         for event in pygame.event.get():
+            # MOBILE FIX: MOUSEBUTTONDOWN is triggered by a finger tap
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if b1.collidepoint(event.pos): await start_wordle(screen)
-                if b2.collidepoint(event.pos): await start_flappy(screen)
-                if b3.collidepoint(event.pos): await start_chess(screen)
+                if b1.collidepoint(event.pos): await run_wordle(screen)
+                if b2.collidepoint(event.pos): await run_flappy(screen)
+                if b3.collidepoint(event.pos): await run_chess(screen)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1: await run_wordle(screen)
+                if event.key == pygame.K_2: await run_flappy(screen)
+                if event.key == pygame.K_3: await run_chess(screen)
 
         pygame.display.flip()
-        await asyncio.sleep(0) # <--- WITHOUT THIS, THE SCREEN IS BLACK
+        await asyncio.sleep(0) # CRITICAL: This stops the Black Screen
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 </script>
 </body>
 </html>
